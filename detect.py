@@ -1,3 +1,6 @@
+import os
+import shutil
+
 import cv2
 from time import time
 from datetime import datetime
@@ -7,6 +10,10 @@ video = cv2.VideoCapture(0)
 fpslimit = 1
 start_time = 1
 min_area = 10000
+nbr_img = 0
+
+if not os.path.exists('./img'):
+ os.makedirs('./img')
 
 while True:
     _, frame = video.read()
@@ -32,17 +39,36 @@ while True:
 
             (x, y, w, h) = cv2.boundingRect(contour)
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
-        
-        cv2.putText(frame, datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
-            (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 1)
 
-        cv2.imshow("Webcam", frame)
+            cv2.imwrite(os.path.join('./img', (datetime.now().strftime("%A %d %B %Y %I:%M:%S%p") + '.png')), frame)
+            nbr_img += 1
+        
+        cv2.putText(frame, datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"), (10, frame.shape[0] - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 1)
+
+        # cv2.imshow("Webcam", frame)
 
         key = cv2.waitKey(1)
         if key == ord('q'):
             break
 
         first_frame = gray
+
+        if nbr_img >= 1000:
+            now = datetime.now()
+            date_time = now.strftime("%d_%m_%Y-%H:%M:%S")
+            dirname = "arch" + date_time
+            shutil.make_archive(dirname, 'zip', "img")
+            files=os.listdir('img')
+            for i in range(0,len(files)):
+                os.remove('img/'+files[i])
+            nbr_img = 0
+
+            # total, used, free = shutil.disk_usage("/")
+            # print("Total: %d GB" % (total // (2 ** 30)))
+            # print("Used: %d GB" % (used // (2 ** 30)))
+            # print("Free: %d GB" % (free // (2 ** 30)))
+
         start_time = time()
 
 video.release()
